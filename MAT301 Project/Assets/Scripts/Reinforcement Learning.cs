@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Random = UnityEngine.Random;
 
 public class ReinforcementLearning : MonoBehaviour
 {
@@ -16,6 +16,16 @@ public class ReinforcementLearning : MonoBehaviour
     String[] action_to_string_ = new String[3] { "Move Forward", "Rotate Right", "Rotate Left" };
     String[] state_to_string_ = new String[3] { "Obstacle in front", "Goal in front", "Nothing in front" };
 
+    //Important stuff
+    [SerializeField]
+    float view_distance_ = 20;
+    [SerializeField]
+    float random_chance_ = 10;
+
+
+    //Extra stuff
+    [SerializeField]
+    bool draw_debug_;
     bool reached_goal_ = false;
 
     void printMatrix()
@@ -37,7 +47,7 @@ public class ReinforcementLearning : MonoBehaviour
             reached_goal_ = true;
         }
     }
-
+     
     // Start is called before the first frame update
     void Start()
     {
@@ -49,9 +59,32 @@ public class ReinforcementLearning : MonoBehaviour
     {
         if(!reached_goal_)
         {
-            
-            State current_state;
+            State current_state = State.NONE_IN_FRONT;
+            RaycastHit hit;
+            Vector3 origin = transform.position;
+            origin.y *= 0.25f;
+            if (draw_debug_) Debug.DrawLine(origin, transform.forward * view_distance_ + origin, Color.green);
+            if (Physics.Raycast(origin, transform.forward, out hit, view_distance_))
+            {
+                if (hit.transform.name == "Obstacle") current_state = State.OBSTACLE_IN_FRONT;
+                else if (hit.transform.name == "Goal") current_state = State.GOAL_IN_FRONT;
+            }
 
+            float best_value = Q[(int)current_state, 0];
+            int index = 0;
+            for(int i = 0; i < num_actions_; i++)
+            {
+                if (Q[(int)current_state, i] > best_value)
+                {
+                    best_value = Q[(int)current_state, i];
+                    index = i;
+                }
+            }
+            if (Random.Range(0, 99) < random_chance_)
+            {
+                index = Random.Range(0, num_actions_);
+            }
+            Action chosen_action = (Action)index;
         }
     }
 }
