@@ -13,6 +13,7 @@ public class ReinforcementLearning : MonoBehaviour
     enum State { OBSTACLE_IN_FRONT, GOAL_IN_FRONT, NONE_IN_FRONT };
     enum Action { MOVE_FORWARD, ROTATE_RIGHT, ROTATE_LEFT };
     State previous_state_ = State.NONE_IN_FRONT;
+    Action chosen_action_;
 
     float[,] Q = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
     String[] action_to_string_ = new String[3] { "Move Forward", "Rotate Right", "Rotate Left" };
@@ -35,6 +36,7 @@ public class ReinforcementLearning : MonoBehaviour
     bool draw_debug_;
     bool reached_goal_ = false;
     GameObject goal_;
+    GameObject current_obstacle_;
 
     void printMatrix()
     {
@@ -53,6 +55,7 @@ public class ReinforcementLearning : MonoBehaviour
         if(other.gameObject.name == "Goal")
         {
             reached_goal_ = true;
+            GetComponent<Rigidbody>().velocity = Vector3.zero;
             printMatrix();
         }
     }
@@ -64,7 +67,7 @@ public class ReinforcementLearning : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (!reached_goal_)
         {
@@ -93,12 +96,15 @@ public class ReinforcementLearning : MonoBehaviour
             switch (chosen_action)
             {
                 case Action.MOVE_FORWARD:
-                    transform.Translate(Vector3.forward * 5 * Time.deltaTime);
+                   // transform.Translate(Vector3.forward * 5 * Time.deltaTime);
+                    GetComponent<Rigidbody>().velocity = transform.forward * 5;
                     break;
                 case Action.ROTATE_LEFT:
+                    GetComponent<Rigidbody>().velocity = Vector3.zero;
                     transform.Rotate(-Vector3.up * rotate_angles_);
                     break;
                 case Action.ROTATE_RIGHT:
+                    GetComponent<Rigidbody>().velocity = Vector3.zero;
                     transform.Rotate(Vector3.up * rotate_angles_);
                     break;
                 default: break;
@@ -107,9 +113,7 @@ public class ReinforcementLearning : MonoBehaviour
             // Calculate Reward
             float reward = 0;
             State new_state = GetState();
-            float new_distance = (transform.position - goal_.transform.position).magnitude;
-            if (new_distance < distance_to_goal) reward += 1000 * (distance_to_goal - new_distance);
-            else if (new_distance > distance_to_goal) reward -= 100 * (new_distance - distance_to_goal);
+           
             if (new_state != current_state)
             {
                 switch (current_state)
@@ -138,6 +142,8 @@ public class ReinforcementLearning : MonoBehaviour
                 {
                     case State.OBSTACLE_IN_FRONT:
                         reward -= 10;
+                        //Vector3.Dot(transform.forward, )
+                       // transform.forward.
                         break;
                     case State.GOAL_IN_FRONT:
                         reward += 5;
@@ -147,12 +153,15 @@ public class ReinforcementLearning : MonoBehaviour
                         break;
                 }
             }
+            float new_distance = (transform.position - goal_.transform.position).magnitude;
+            if (new_distance < distance_to_goal) reward *= 100f * (distance_to_goal - new_distance);
+            else if (new_distance > distance_to_goal) reward *= -100f * (new_distance - distance_to_goal); 
 
             // Update Q Matrix
             Q[(int)current_state, index] += learning_rate_ * (reward + discounting_rate_ * best_value - Q[(int)current_state, index]);
 
             // Print out which action the AI ran.
-            Debug.Log(string.Format("State was: {0} Ran action: {1}, Reward recieved: {2}", state_to_string_[(int)current_state], action_to_string_[index], reward));
+            //Debug.Log(string.Format("State was: {0} Ran action: {1}, Reward recieved: {2}", state_to_string_[(int)current_state], action_to_string_[index], reward));
         }
 
         //if (Input.GetKey(KeyCode.W))
@@ -178,7 +187,11 @@ public class ReinforcementLearning : MonoBehaviour
         if (draw_debug_) Debug.DrawLine(origin, transform.forward * view_distance_ + origin, Color.green);
         if (Physics.Raycast(origin, transform.forward, out hit, view_distance_))
         {
-            if (hit.transform.name == "Obstacle") state = State.OBSTACLE_IN_FRONT;
+            if (hit.transform.tag == "Obstacle")
+            {
+                //current_obstacle_
+                state = State.OBSTACLE_IN_FRONT;
+            }
             else if (hit.transform.name == "Goal") state = State.GOAL_IN_FRONT;
         }
         return state;
