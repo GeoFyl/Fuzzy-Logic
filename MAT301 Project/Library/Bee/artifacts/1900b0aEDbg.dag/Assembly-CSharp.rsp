@@ -352,7 +352,7 @@
 -r:"Library/Bee/artifacts/1900b0aEDbg.dag/UnityEngine.UI.ref.dll"
 -analyzer:"E:/Program Files/Unity/Hub/Editor/2022.3.19f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll"
 -analyzer:"E:/Program Files/Unity/Hub/Editor/2022.3.19f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
-"Assets/Scripts/Car.cs"
+"Assets/Scripts/Fuzzy Engine.cs"
 "Assets/Scripts/Fuzzy Missile.cs"
 "Assets/Scripts/FuzzyLogicLibrary/Constants/ErrorMessages.cs"
 "Assets/Scripts/FuzzyLogicLibrary/Defuzzification/CoGDefuzzification.cs"
@@ -392,7 +392,11 @@
 "Assets/Scripts/FuzzyLogicLibrary/Rules/Premise.cs"
 "Assets/Scripts/FuzzyLogicLibrary/Rules/Rule.cs"
 "Assets/Scripts/FuzzyLogicLibrary/Variables/LinguisticVariable.cs"
-"Assets/Scripts/Reinforcement Learning.cs"
+"Assets/Scripts/Non Essentials/Chopper.cs"
+"Assets/Scripts/Non Essentials/Earth.cs"
+"Assets/Scripts/Non Essentials/Pause Menu.cs"
+"Assets/Scripts/Non Essentials/Reinforcement Learning.cs"
+"Assets/Scripts/PlayerJet.cs"
 -langversion:9.0
 
 /deterministic
