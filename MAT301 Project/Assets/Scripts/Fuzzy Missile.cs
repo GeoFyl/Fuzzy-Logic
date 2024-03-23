@@ -42,7 +42,7 @@ public class FuzzyMissile : MonoBehaviour {
 
             
         //Debug.Log("forward distance: " + (transform.position.z - player_.transform.position.z) + ", result: " + forward_result);
-        Debug.Log("vertical distance: " + (transform.position.y - player_.transform.position.y) + ", result: " + vertical_result);
+        //Debug.Log("vertical distance: " + (transform.position.y - player_.transform.position.y) + ", result: " + vertical_result);
         //Debug.Log("forward distance: " + (transform.position.z - player_.transform.position.z) + ", sideways distance: " + (transform.position.x - player_.transform.position.x) + ", result: " + sideways_result);
         // Debug.Log("sideways result: " + sideways_result + ", forward result: " + forward_result);
 
