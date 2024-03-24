@@ -10,6 +10,7 @@ using UnityEngine.Assertions.Must;
 using UnityEngine.UI;
 using TMPro;
 using System.Linq;
+using Unity.VisualScripting;
 
 //public class MembershipFunctionValues : MonoBehaviour
 //{
@@ -59,12 +60,14 @@ public class FuzzyBrain : MonoBehaviour
 
     IFuzzyEngine sideways_engine_, forward_engine_, vertical_engine_;
     LinguisticVariable sideways_distance_, sideways_direction_, forward_distance_, forward_direction_, vertical_distance_, vertical_direction_;
-    IMembershipFunction very_behind_target, behind_target, alongside_target, in_front_of_target, very_in_front_of_target,
-                        very_below_target, below_target, same_height, above_target, very_above_target,
-                        move_alot_down, move_down, stay_same_height, move_up, move_alot_up,
-                        very_left_of_target, left_of_target, inline_with_target, right_of_target, very_right_of_target,
-                        steer_alot_left, steer_left, stay_centred, steer_right, steer_alot_right;
-    List<List<MembershipFunctionValues>> mf_values_ = new List<List<MembershipFunctionValues>>(); 
+    RefMembershipFunction very_behind_target= new RefMembershipFunction(), behind_target= new RefMembershipFunction(), alongside_target= new RefMembershipFunction(), in_front_of_target= new RefMembershipFunction(), very_in_front_of_target= new RefMembershipFunction(),
+                        very_below_target= new RefMembershipFunction(), below_target= new RefMembershipFunction(), same_height= new RefMembershipFunction(), above_target= new RefMembershipFunction(), very_above_target= new RefMembershipFunction(),
+                        move_alot_down= new RefMembershipFunction(), move_down= new RefMembershipFunction(), stay_same_height= new RefMembershipFunction(), move_up= new RefMembershipFunction(), move_alot_up= new RefMembershipFunction(),
+                        very_left_of_target= new RefMembershipFunction(), left_of_target= new RefMembershipFunction(), inline_with_target= new RefMembershipFunction(), right_of_target= new RefMembershipFunction(), very_right_of_target= new RefMembershipFunction(),
+                        steer_alot_left= new RefMembershipFunction(), steer_left= new RefMembershipFunction(), stay_centred= new RefMembershipFunction(), steer_right= new RefMembershipFunction(), steer_alot_right = new RefMembershipFunction();
+
+    List<List<RefMembershipFunction>> membership_functions_ = new List<List<RefMembershipFunction>>();
+    //List<List<MembershipFunctionValues>> mf_values_ = new List<List<MembershipFunctionValues>>(); 
 
     // Start is called before the first frame update
     void Start()
@@ -95,97 +98,132 @@ public class FuzzyBrain : MonoBehaviour
 
     private void InitMembershipFuncs()
     {
-        mf_values_.Add(new List<MembershipFunctionValues>());
-        mf_values_[0].Add(new MembershipFunctionValues("Far Behind", -65, -30, -20, -15));
-        mf_values_[0].Add(new MembershipFunctionValues("Behind", -20, -15, -10, -4));
-        mf_values_[0].Add(new MembershipFunctionValues("Alongside", -5, 0, 0, 5));
-        mf_values_[0].Add(new MembershipFunctionValues("In Front", 4, 10, 15, 20));
-        mf_values_[0].Add(new MembershipFunctionValues("Far In Front", 15, 20, 30, 65));
+        //mf_values_.Add(new List<MembershipFunctionValues>());
+        //mf_values_[0].Add(new MembershipFunctionValues("Far Behind", -65, -30, -20, -15));
+        //mf_values_[0].Add(new MembershipFunctionValues("Behind", -20, -15, -10, -4));
+        //mf_values_[0].Add(new MembershipFunctionValues("Alongside", -5, 0, 0, 5));
+        //mf_values_[0].Add(new MembershipFunctionValues("In Front", 4, 10, 15, 20));
+        //mf_values_[0].Add(new MembershipFunctionValues("Far In Front", 15, 20, 30, 65));
 
-        mf_values_.Add(new List<MembershipFunctionValues>());
-        mf_values_[1].Add(new MembershipFunctionValues("Far Below", -15, -8, -7, -5));
-        mf_values_[1].Add(new MembershipFunctionValues("Below", -7, -5, -3, -0.5f));
-        mf_values_[1].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
-        mf_values_[1].Add(new MembershipFunctionValues("Above", 0.5f, 3, 5, 7));
-        mf_values_[1].Add(new MembershipFunctionValues("Far Above", 5, 7, 8, 15));
+        //mf_values_.Add(new List<MembershipFunctionValues>());
+        //mf_values_[1].Add(new MembershipFunctionValues("Far Below", -15, -8, -7, -5));
+        //mf_values_[1].Add(new MembershipFunctionValues("Below", -7, -5, -3, -0.5f));
+        //mf_values_[1].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
+        //mf_values_[1].Add(new MembershipFunctionValues("Above", 0.5f, 3, 5, 7));
+        //mf_values_[1].Add(new MembershipFunctionValues("Far Above", 5, 7, 8, 15));
 
-        mf_values_.Add(new List<MembershipFunctionValues>());
-        mf_values_[2].Add(new MembershipFunctionValues("Far Down", -20, -15, -10, -5));
-        mf_values_[2].Add(new MembershipFunctionValues("Down", -10, -5, -1, 0));
-        mf_values_[2].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
-        mf_values_[2].Add(new MembershipFunctionValues("Up", 0, 1, 5, 10));
-        mf_values_[2].Add(new MembershipFunctionValues("Far Up", 5, 10, 15, 20));
+        //mf_values_.Add(new List<MembershipFunctionValues>());
+        //mf_values_[2].Add(new MembershipFunctionValues("Far Down", -20, -15, -10, -5));
+        //mf_values_[2].Add(new MembershipFunctionValues("Down", -10, -5, -1, 0));
+        //mf_values_[2].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
+        //mf_values_[2].Add(new MembershipFunctionValues("Up", 0, 1, 5, 10));
+        //mf_values_[2].Add(new MembershipFunctionValues("Far Up", 5, 10, 15, 20));
 
-        mf_values_.Add(new List<MembershipFunctionValues>());
-        mf_values_[3].Add(new MembershipFunctionValues("Far Left", -30, -30, -15, -10));
-        mf_values_[3].Add(new MembershipFunctionValues("Left", -15, -10, -5, -0.5f));
-        mf_values_[3].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
-        mf_values_[3].Add(new MembershipFunctionValues("Right", 0.5f, 5, 10, 15));
-        mf_values_[3].Add(new MembershipFunctionValues("Far Right", 10, 15, 30, 30));
+        //mf_values_.Add(new List<MembershipFunctionValues>());
+        //mf_values_[3].Add(new MembershipFunctionValues("Far Left", -30, -30, -15, -10));
+        //mf_values_[3].Add(new MembershipFunctionValues("Left", -15, -10, -5, -0.5f));
+        //mf_values_[3].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
+        //mf_values_[3].Add(new MembershipFunctionValues("Right", 0.5f, 5, 10, 15));
+        //mf_values_[3].Add(new MembershipFunctionValues("Far Right", 10, 15, 30, 30));
 
-        mf_values_.Add(new List<MembershipFunctionValues>());
-        mf_values_[4].Add(new MembershipFunctionValues("Far Left", -50, -15, -10, -5));
-        mf_values_[4].Add(new MembershipFunctionValues("Left", -10, -5, -1, 0));
-        mf_values_[4].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
-        mf_values_[4].Add(new MembershipFunctionValues("Right", 0, 1, 5, 10));
-        mf_values_[4].Add(new MembershipFunctionValues("Far Right", 5, 10, 15, 50));
+        //mf_values_.Add(new List<MembershipFunctionValues>());
+        //mf_values_[4].Add(new MembershipFunctionValues("Far Left", -50, -15, -10, -5));
+        //mf_values_[4].Add(new MembershipFunctionValues("Left", -10, -5, -1, 0));
+        //mf_values_[4].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
+        //mf_values_[4].Add(new MembershipFunctionValues("Right", 0, 1, 5, 10));
+        //mf_values_[4].Add(new MembershipFunctionValues("Far Right", 5, 10, 15, 50));
+
+        forward_distance_ = new LinguisticVariable("forward_distance");
+        very_behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far Behind", -65, -30, -20, -15);
+        behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Behind", -20, -15, -10, -4);
+        //alongside_target.function = forward_distance_.MembershipFunctions.AddTriangle("Alongside", -5, 0, 5);
+        alongside_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Alongside", -5, 0, 0, 5);
+        in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("In Front", 4, 10, 15, 20);
+        very_in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far In Front", 15, 20, 30, 65);
+        membership_functions_.Add(new List<RefMembershipFunction>());
+        membership_functions_[0].Add(very_behind_target);
+        membership_functions_[0].Add(behind_target);
+        membership_functions_[0].Add(alongside_target);
+        membership_functions_[0].Add(in_front_of_target);
+        membership_functions_[0].Add(very_in_front_of_target);
+
+        vertical_distance_ = new LinguisticVariable("vertical_distance");
+        very_below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Below", -15, -8, -7, -5);
+        below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Below", -7, -5, -3, -0.5f);
+        //same_height.function = vertical_distance_.MembershipFunctions.AddTriangle("None", -1, 0, 1);
+        same_height.function = vertical_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
+        above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Above", 0.5f, 3, 5, 7);
+        very_above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Above", 5, 7, 8, 15);
+        membership_functions_.Add(new List<RefMembershipFunction>());
+        membership_functions_[1].Add(very_below_target);
+        membership_functions_[1].Add(below_target);
+        membership_functions_[1].Add(same_height);
+        membership_functions_[1].Add(above_target);
+        membership_functions_[1].Add(very_above_target);
+
+        vertical_direction_ = new LinguisticVariable("vertical_direction");
+        move_alot_down.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Far Down", -20, -15, -10, -5);
+        move_down.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Down", -10, -5, -1, 0);
+        //stay_same_height.function = vertical_direction_.MembershipFunctions.AddTriangle("None", -0.5f, 0, 0.5f);
+        stay_same_height.function = vertical_direction_.MembershipFunctions.AddTrapezoid("None", -0.5f, 0, 0, 0.5f);
+        move_up.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Up", 0, 1, 5, 10);
+        move_alot_up.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Far Up", 5, 10, 15, 20);
+        membership_functions_.Add(new List<RefMembershipFunction>());
+        membership_functions_[2].Add(move_alot_down);
+        membership_functions_[2].Add(move_down);
+        membership_functions_[2].Add(stay_same_height);
+        membership_functions_[2].Add(move_up);
+        membership_functions_[2].Add(move_alot_up);
+
+        sideways_distance_ = new LinguisticVariable("sideways_distance");
+        very_left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Left", -30, -30, -15, -10);
+        left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Left", -15, -10, -5, -0.5f);
+        //inline_with_target.function = sideways_distance_.MembershipFunctions.AddTriangle("None", -1, 0, 1);
+        inline_with_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
+        right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Right", 0.5f, 5, 10, 15);
+        very_right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Right", 10, 15, 30, 30);
+        membership_functions_.Add(new List<RefMembershipFunction>());
+        membership_functions_[3].Add(very_left_of_target);
+        membership_functions_[3].Add(left_of_target);
+        membership_functions_[3].Add(inline_with_target);
+        membership_functions_[3].Add(right_of_target);
+        membership_functions_[3].Add(very_right_of_target);
+
+        sideways_direction_ = new LinguisticVariable("sideways_direction");
+        steer_alot_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Left", -50, -15, -10, -5);
+        steer_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Left", -10, -5, -1, 0);
+        //stay_centred.function = sideways_direction_.MembershipFunctions.AddTriangle("None", -0.5f, 0, 0.5f);
+        stay_centred.function = sideways_direction_.MembershipFunctions.AddTrapezoid("None", -0.5f, 0, 0, 0.5f);
+        steer_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Right", 0, 1, 5, 10);
+        steer_alot_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Right", 5, 10, 15, 50);
+        membership_functions_.Add(new List<RefMembershipFunction>());
+        membership_functions_[4].Add(steer_alot_left);
+        membership_functions_[4].Add(steer_left);
+        membership_functions_[4].Add(stay_centred);
+        membership_functions_[4].Add(steer_right);
+        membership_functions_[4].Add(steer_alot_right);
     }
 
     void CreateFuzzyEngines()
     {
-        forward_distance_ = new LinguisticVariable("forward_distance");
-        very_behind_target = forward_distance_.MembershipFunctions.AddTrapezoid(mf_values_[0][0].function_name, mf_values_[0][0].values[0], mf_values_[0][0].values[1], mf_values_[0][0].values[2], mf_values_[0][0].values[3]);
-        behind_target = forward_distance_.MembershipFunctions.AddTrapezoid(mf_values_[0][1].function_name, mf_values_[0][1].values[0], mf_values_[0][1].values[1], mf_values_[0][1].values[2], mf_values_[0][1].values[3]);
-        alongside_target = forward_distance_.MembershipFunctions.AddTriangle(mf_values_[0][2].function_name, mf_values_[0][2].values[0], mf_values_[0][2].values[1], mf_values_[0][2].values[3]);
-        in_front_of_target = forward_distance_.MembershipFunctions.AddTrapezoid(mf_values_[0][3].function_name, mf_values_[0][3].values[0], mf_values_[0][3].values[1], mf_values_[0][3].values[2], mf_values_[0][3].values[3]);
-        very_in_front_of_target = forward_distance_.MembershipFunctions.AddTrapezoid(mf_values_[0][4].function_name, mf_values_[0][4].values[0], mf_values_[0][4].values[1], mf_values_[0][4].values[2], mf_values_[0][4].values[3]);
-
-        vertical_distance_ = new LinguisticVariable("vertical_distance");
-        very_below_target = vertical_distance_.MembershipFunctions.AddTrapezoid(mf_values_[1][0].function_name, mf_values_[1][0].values[0], mf_values_[1][0].values[1], mf_values_[1][0].values[2], mf_values_[1][0].values[3]);
-        below_target = vertical_distance_.MembershipFunctions.AddTrapezoid(mf_values_[1][1].function_name, mf_values_[1][1].values[0], mf_values_[1][1].values[1], mf_values_[1][1].values[2], mf_values_[1][1].values[3]);
-        same_height = vertical_distance_.MembershipFunctions.AddTriangle(mf_values_[1][2].function_name, mf_values_[1][2].values[0], mf_values_[1][2].values[1], mf_values_[1][2].values[3]);
-        above_target = vertical_distance_.MembershipFunctions.AddTrapezoid(mf_values_[1][3].function_name, mf_values_[1][3].values[0], mf_values_[1][3].values[1], mf_values_[1][3].values[2], mf_values_[1][3].values[3]);
-        very_above_target = vertical_distance_.MembershipFunctions.AddTrapezoid(mf_values_[1][4].function_name, mf_values_[1][4].values[0], mf_values_[1][4].values[1], mf_values_[1][4].values[2], mf_values_[1][4].values[3]);
-
-        vertical_direction_ = new LinguisticVariable("vertical_direction");
-        move_alot_down = vertical_direction_.MembershipFunctions.AddTrapezoid(mf_values_[2][0].function_name, mf_values_[2][0].values[0], mf_values_[2][0].values[1], mf_values_[2][0].values[2], mf_values_[2][0].values[3]);
-        move_down = vertical_direction_.MembershipFunctions.AddTrapezoid(mf_values_[2][1].function_name, mf_values_[2][1].values[0], mf_values_[2][1].values[1], mf_values_[2][1].values[2], mf_values_[2][1].values[3]);
-        stay_same_height = vertical_direction_.MembershipFunctions.AddTriangle(mf_values_[2][2].function_name, mf_values_[2][2].values[0], mf_values_[2][2].values[1], mf_values_[2][2].values[3]);
-        move_up = vertical_direction_.MembershipFunctions.AddTrapezoid(mf_values_[2][3].function_name, mf_values_[2][3].values[0], mf_values_[2][3].values[1], mf_values_[2][3].values[2], mf_values_[2][3].values[3]);
-        move_alot_up = vertical_direction_.MembershipFunctions.AddTrapezoid(mf_values_[2][4].function_name, mf_values_[2][4].values[0], mf_values_[2][4].values[1], mf_values_[2][4].values[2], mf_values_[2][4].values[3]);
-
-        sideways_distance_ = new LinguisticVariable("sideways_distance");
-        very_left_of_target = sideways_distance_.MembershipFunctions.AddTrapezoid(mf_values_[3][0].function_name, mf_values_[3][0].values[0], mf_values_[3][0].values[1], mf_values_[3][0].values[2], mf_values_[3][0].values[3]);
-        left_of_target = sideways_distance_.MembershipFunctions.AddTrapezoid(mf_values_[3][1].function_name, mf_values_[3][1].values[0], mf_values_[3][1].values[1], mf_values_[3][1].values[2], mf_values_[3][1].values[3]);
-        inline_with_target = sideways_distance_.MembershipFunctions.AddTriangle(mf_values_[3][2].function_name, mf_values_[3][2].values[0], mf_values_[3][2].values[1], mf_values_[3][2].values[3]);
-        right_of_target = sideways_distance_.MembershipFunctions.AddTrapezoid(mf_values_[3][3].function_name, mf_values_[3][3].values[0], mf_values_[3][3].values[1], mf_values_[3][3].values[2], mf_values_[3][3].values[3]);
-        very_right_of_target = sideways_distance_.MembershipFunctions.AddTrapezoid(mf_values_[3][4].function_name, mf_values_[3][4].values[0], mf_values_[3][4].values[1], mf_values_[3][4].values[2], mf_values_[3][4].values[3]);
-
-        sideways_direction_ = new LinguisticVariable("sideways_direction");
-        steer_alot_left = sideways_direction_.MembershipFunctions.AddTrapezoid(mf_values_[4][0].function_name, mf_values_[4][0].values[0], mf_values_[4][0].values[1], mf_values_[4][0].values[2], mf_values_[4][0].values[3]);
-        steer_left = sideways_direction_.MembershipFunctions.AddTrapezoid(mf_values_[4][1].function_name, mf_values_[4][1].values[0], mf_values_[4][1].values[1], mf_values_[4][1].values[2], mf_values_[4][1].values[3]);
-        stay_centred = sideways_direction_.MembershipFunctions.AddTriangle(mf_values_[4][2].function_name, mf_values_[4][2].values[0], mf_values_[4][2].values[1], mf_values_[4][2].values[3]);
-        steer_right = sideways_direction_.MembershipFunctions.AddTrapezoid(mf_values_[4][3].function_name, mf_values_[4][3].values[0], mf_values_[4][3].values[1], mf_values_[4][3].values[2], mf_values_[4][3].values[3]);
-        steer_alot_right = sideways_direction_.MembershipFunctions.AddTrapezoid(mf_values_[4][4].function_name, mf_values_[4][4].values[0], mf_values_[4][4].values[1], mf_values_[4][4].values[2], mf_values_[4][4].values[3]);
-
         vertical_engine_ = new FuzzyEngineFactory().Default();
-        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target)).Then(vertical_direction_.Is(move_alot_down));
-        var vertical_rule_x = Rule.If(vertical_distance_.Is(above_target).And(forward_distance_.Is(alongside_target))).Then(vertical_direction_.Is(move_alot_down));
-        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target)).Then(vertical_direction_.Is(move_down));
-        var vertical_rule_3 = Rule.If(vertical_distance_.Is(same_height)).Then(vertical_direction_.Is(stay_same_height));
-        var vertical_rule_4 = Rule.If(vertical_distance_.Is(below_target)).Then(vertical_direction_.Is(move_up));
-        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target).And(forward_distance_.Is(alongside_target))).Then(vertical_direction_.Is(move_alot_up));
-        var vertical_rule_y = Rule.If(vertical_distance_.Is(very_below_target)).Then(vertical_direction_.Is(move_alot_up));
+        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target.function)).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_x = Rule.If(vertical_distance_.Is(above_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target.function)).Then(vertical_direction_.Is(move_down.function));
+        var vertical_rule_3 = Rule.If(vertical_distance_.Is(same_height.function)).Then(vertical_direction_.Is(stay_same_height.function));
+        var vertical_rule_4 = Rule.If(vertical_distance_.Is(below_target.function)).Then(vertical_direction_.Is(move_up.function));
+        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_up.function));
+        var vertical_rule_y = Rule.If(vertical_distance_.Is(very_below_target.function)).Then(vertical_direction_.Is(move_alot_up.function));
         vertical_engine_.Rules.Add(vertical_rule_1, vertical_rule_2, vertical_rule_3, vertical_rule_4, vertical_rule_5, vertical_rule_x, vertical_rule_y);
 
         sideways_engine_ = new FuzzyEngineFactory().Default();
-        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target)).Then(sideways_direction_.Is(steer_alot_left));
-        var side_test_rule = Rule.If(sideways_distance_.Is(right_of_target).And(forward_distance_.Is(alongside_target))).Then(sideways_direction_.Is(steer_alot_left));
-        var sideways_rule_2 = Rule.If(sideways_distance_.Is(right_of_target)).Then(sideways_direction_.Is(steer_left));
-        var sideways_rule_3 = Rule.If(sideways_distance_.Is(inline_with_target)).Then(sideways_direction_.Is(stay_centred));
-        var sideways_rule_4 = Rule.If(sideways_distance_.Is(left_of_target)).Then(sideways_direction_.Is(steer_right));
-        var side_test_rule2 = Rule.If(sideways_distance_.Is(left_of_target).And(forward_distance_.Is(alongside_target))).Then(sideways_direction_.Is(steer_alot_right));
-        var sideways_rule_5 = Rule.If(sideways_distance_.Is(very_left_of_target)).Then(sideways_direction_.Is(steer_alot_right));
+        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target.function)).Then(sideways_direction_.Is(steer_alot_left.function));
+        var side_test_rule = Rule.If(sideways_distance_.Is(right_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_left.function));
+        var sideways_rule_2 = Rule.If(sideways_distance_.Is(right_of_target.function)).Then(sideways_direction_.Is(steer_left.function));
+        var sideways_rule_3 = Rule.If(sideways_distance_.Is(inline_with_target.function)).Then(sideways_direction_.Is(stay_centred.function));
+        var sideways_rule_4 = Rule.If(sideways_distance_.Is(left_of_target.function)).Then(sideways_direction_.Is(steer_right.function));
+        var side_test_rule2 = Rule.If(sideways_distance_.Is(left_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_right.function));
+        var sideways_rule_5 = Rule.If(sideways_distance_.Is(very_left_of_target.function)).Then(sideways_direction_.Is(steer_alot_right.function));
         sideways_engine_.Rules.Add(sideways_rule_1, sideways_rule_2, sideways_rule_3, sideways_rule_4, sideways_rule_5, side_test_rule, side_test_rule2);
     }
 
@@ -248,7 +286,7 @@ public class FuzzyBrain : MonoBehaviour
         currently_selected_linguistic_ = linguistic_var;
         for (int i = 0; i < 5; i++)
         {
-            membership_dropdown_.options[i].text = mf_values_[linguistic_var][i].function_name;
+            membership_dropdown_.options[i].text = membership_functions_[linguistic_var][i].function.Name;
         }
         membership_dropdown_.transform.GetChild(0).GetComponent<TMP_Text>().text = membership_dropdown_.options[0].text;
         DisplayValueInputs(0);
@@ -258,13 +296,18 @@ public class FuzzyBrain : MonoBehaviour
         
 
         int index = 0;
-        for(int line = 0; line < 5; line++)
+        for(int mf = 0; mf < 5; mf++)
         {
-            for (int i = 0; i < 4; i++)
-            {
-                x_values[index] = mf_values_[linguistic_var][line].values[i];
-                index++;
-            }
+            //for (int i = 0; i < 4; i++)
+            //{
+            TrapezoidMembershipFunction function = (TrapezoidMembershipFunction)membership_functions_[linguistic_var][mf].function;
+            x_values[index] = (float)function.A;
+            x_values[index+1] = (float)function.B;
+            x_values[index+2] = (float)function.C;
+            x_values[index+3] = (float)function.D;
+            index += 4;
+
+            //}
         }
        // Array.Sort(x_values);
         for (int line = 0; line < 5; line++)
@@ -282,17 +325,18 @@ public class FuzzyBrain : MonoBehaviour
             //        }
             //    }
             //}
-            for (int i = 0; i <= x_values.Length - mf_values_[linguistic_var][line].values.Count; i++)
-            {
-                if (x_values.Skip(i).Take(mf_values_[linguistic_var][line].values.Count).SequenceEqual(mf_values_[linguistic_var][line].values))
-                {
-                    graph_.SeriesPlotY[line].YValues[i] = 0;
-                    graph_.SeriesPlotY[line].YValues[i + 1] = 1;
-                    graph_.SeriesPlotY[line].YValues[i + 2] = 1;
-                    graph_.SeriesPlotY[line].YValues[i + 3] = 0;
-                    break;
-                }
-            }
+            //float[] values = new float[4] {}
+            //for (int i = 0; i <= x_values.Length - 4; i++)
+            //{
+            //    if (x_values.Skip(i).Take(4).SequenceEqual(mf_values_[linguistic_var][line].values))
+            //    {
+                    graph_.SeriesPlotY[line].YValues[line * 4] = 0;
+                    graph_.SeriesPlotY[line].YValues[line * 4 + 1] = 1;
+                    graph_.SeriesPlotY[line].YValues[line * 4 + 2] = 1;
+                    graph_.SeriesPlotY[line].YValues[line * 4 + 3] = 0;
+                    //break;
+            //    }
+            //}
         }
         graph_.SeriesPlotX = x_values;
         graph_.UpdatePlot();
@@ -301,45 +345,69 @@ public class FuzzyBrain : MonoBehaviour
     public void DisplayValueInputs(int membership_function)
     {
         currently_selected_membership_ = membership_function;
-        if (membership_function == 2)
-        {
-            value4_object_.transform.parent.gameObject.SetActive(false);
-            value1_.text = mf_values_[currently_selected_linguistic_][membership_function].values[0].ToString();
-            value2_.text = mf_values_[currently_selected_linguistic_][membership_function].values[1].ToString();
-            value3_.text = mf_values_[currently_selected_linguistic_][membership_function].values[3].ToString();
-        }
-        else
-        {
-            value4_object_.transform.parent.gameObject.SetActive(true);
-            value1_.text = mf_values_[currently_selected_linguistic_][membership_function].values[0].ToString();
-            value2_.text = mf_values_[currently_selected_linguistic_][membership_function].values[1].ToString();
-            value3_.text = mf_values_[currently_selected_linguistic_][membership_function].values[2].ToString();
-            value4_.text = mf_values_[currently_selected_linguistic_][membership_function].values[3].ToString();
-        }
+        //if (membership_function == 2)
+        //{
+        //    value4_object_.transform.parent.gameObject.SetActive(false);
+        //    TriangleMembershipFunction function = (TriangleMembershipFunction)membership_functions_[currently_selected_linguistic_][membership_function].function;
+        //    value1_.text = function.A.ToString();
+        //    value2_.text = function.B.ToString();
+        //    value3_.text = function.C.ToString();
+        //}
+        //else
+        //{
+            //value4_object_.transform.parent.gameObject.SetActive(true);
+            TrapezoidMembershipFunction function = (TrapezoidMembershipFunction)membership_functions_[currently_selected_linguistic_][membership_function].function;
+            value1_.text = function.A.ToString();
+            value2_.text = function.B.ToString();
+            value3_.text = function.C.ToString();
+            value4_.text = function.D.ToString();
+        //}
     }
 
     public void UpdateMembershipValues()
     {
         //if (currently_selected_membership_ == 2)
         //{
-            float val1 = float.Parse(value1_.text);
-            float val2 = float.Parse(value2_.text);
-            float val3 = float.Parse(value3_.text);
+        float val1 = float.Parse(value1_.text);
+        float val2 = float.Parse(value2_.text);
+        float val3 = float.Parse(value3_.text);
 
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[0] = val1;
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[1] = val2;
+        ref LinguisticVariable lingustic = ref forward_distance_;
 
-        if (currently_selected_membership_ == 2)
+        switch (currently_selected_linguistic_)
         {
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[2] = val2;
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[3] = val3;
+            case 1:
+                lingustic = ref vertical_distance_;
+                break;
+            case 2:
+                lingustic = ref vertical_direction_;
+                break;
+            case 3:
+                lingustic = ref sideways_distance_; 
+                break;
+            case 4:
+                lingustic = ref sideways_direction_;
+                break;
+            default: break;
         }
-        else
-        {
+
+        //if (currently_selected_membership_ == 2)
+        //{
+        //    // TriangleMembershipFunction new_function;
+        //    string func_name = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function.Name;
+        //    membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function = new TriangleMembershipFunction(func_name, val1, val2, val3);
+        //    lingustic.MembershipFunctions[2] = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function;
+        //}
+        //else
+        //{
             float val4 = float.Parse(value4_.text);
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[2] = val3;
-            mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[3] = val4;
-        }
+            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[2] = val3;
+            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[3] = val4;
+
+            string func_name = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function.Name;
+            membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function = new TrapezoidMembershipFunction(func_name, val1, val2, val3, val4);
+            lingustic.MembershipFunctions[currently_selected_membership_] = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function;
+        //}
 
         CreateFuzzyEngines();
         //}
