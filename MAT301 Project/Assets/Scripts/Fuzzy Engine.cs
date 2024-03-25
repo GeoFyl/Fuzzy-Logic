@@ -23,15 +23,26 @@ public class FuzzyBrain : MonoBehaviour
 
    // List<GameObject> graph_lines_ = new List<GameObject>();
 
-    enum MovementType { Random, Predefined };
+    enum MovementType { Random, Stationary };
     [SerializeField]
     MovementType movement_ = MovementType.Random;
+    [SerializeField]
+    float missiles_per_second = 2;
+    float missile_fire_timer_ = 0;
     [SerializeField]
     float move_speed_ = 10;
     [SerializeField]
     float x_position_limit_ = 8;
     [SerializeField]
     float y_position_limit_ = 8;
+
+    [SerializeField]
+    GameObject hit_counter_;
+    [SerializeField]
+    GameObject miss_counter_;
+    [SerializeField]
+    GameObject downed_counter_;
+    public int hits_, misses_, downed_;
 
     [SerializeField]
     GameObject graph_object_;
@@ -45,7 +56,7 @@ public class FuzzyBrain : MonoBehaviour
     GameObject value3_object_;
     [SerializeField]
     GameObject value4_object_;
-    TMP_InputField value1_, value2_, value3_, value4_;
+    public TMP_InputField value1_, value2_, value3_, value4_;
     TMP_Dropdown membership_dropdown_;
     SimplestPlot graph_;
     int currently_selected_linguistic_;
@@ -58,88 +69,102 @@ public class FuzzyBrain : MonoBehaviour
     [SerializeField]
     float missile_forward_speed_ = 15;
 
-    IFuzzyEngine sideways_engine_, forward_engine_, vertical_engine_;
-    LinguisticVariable sideways_distance_, sideways_direction_, forward_distance_, forward_direction_, vertical_distance_, vertical_direction_;
+    IFuzzyEngine sideways_engine_, vertical_engine_;
+    LinguisticVariable sideways_distance_, sideways_direction_, forward_distance_, vertical_distance_, vertical_direction_, player_missile_sideways_distance_, player_missile_vertical_distance_, player_missile_forward_distance_;
     RefMembershipFunction very_behind_target= new RefMembershipFunction(), behind_target= new RefMembershipFunction(), alongside_target= new RefMembershipFunction(), in_front_of_target= new RefMembershipFunction(), very_in_front_of_target= new RefMembershipFunction(),
                         very_below_target= new RefMembershipFunction(), below_target= new RefMembershipFunction(), same_height= new RefMembershipFunction(), above_target= new RefMembershipFunction(), very_above_target= new RefMembershipFunction(),
                         move_alot_down= new RefMembershipFunction(), move_down= new RefMembershipFunction(), stay_same_height= new RefMembershipFunction(), move_up= new RefMembershipFunction(), move_alot_up= new RefMembershipFunction(),
                         very_left_of_target= new RefMembershipFunction(), left_of_target= new RefMembershipFunction(), inline_with_target= new RefMembershipFunction(), right_of_target= new RefMembershipFunction(), very_right_of_target= new RefMembershipFunction(),
                         steer_alot_left= new RefMembershipFunction(), steer_left= new RefMembershipFunction(), stay_centred= new RefMembershipFunction(), steer_right= new RefMembershipFunction(), steer_alot_right = new RefMembershipFunction();
+    public List<List<RefMembershipFunction>> membership_functions_ = new List<List<RefMembershipFunction>>();
 
-    List<List<RefMembershipFunction>> membership_functions_ = new List<List<RefMembershipFunction>>();
-    //List<List<MembershipFunctionValues>> mf_values_ = new List<List<MembershipFunctionValues>>(); 
+    [SerializeField]
+    GameObject test_manager_;
+    bool testing_ = false;
+    int missiles_fired_, missiles_completed_;
 
     // Start is called before the first frame update
     void Start()
     {
         target_position_.x = Random.Range(-x_position_limit_, x_position_limit_);
-        target_position_.y = Random.Range(-y_position_limit_, y_position_limit_);
+        target_position_.y = Random.Range(0, y_position_limit_);
         target_position_.z = transform.position.z;
 
         // ---------- Setup Membership Function values -----------
-        InitMembershipFuncs();
+        InitMembershipFuncsAndRules();
         CreateFuzzyEngines();
 
         InitGraph();
-        UpdateGraph(0);
         DisplayValueInputs(0);
+        UpdateGraph(0);
     }
 
-    public float DefuzzifySideways(float sideways, float forward)
+    public float DefuzzifySideways(float sideways, float forward, float pm_forward, float pm_side)
     {
-        return (float)sideways_engine_.Defuzzify(new { sideways_distance = (double)sideways, forward_distance = (double)forward });
+        return (float)sideways_engine_.Defuzzify(new { sideways_distance = (double)sideways, forward_distance = (double)forward, pm_forward_distance = (double)pm_forward, pm_side_distance = (double)pm_side});
     }
 
-    public float DefuzzifyVertical(float vertical, float forward)
+    public float DefuzzifyVertical(float vertical, float forward, float pm_forward, float pm_vertical)
     {
-        return (float)vertical_engine_.Defuzzify(new { vertical_distance = (double)vertical, forward_distance = (double)forward });
-       // return (float)vertical_engine_.Defuzzify(new { vertical_distance = (double)vertical });
+        return (float)vertical_engine_.Defuzzify(new { vertical_distance = (double)vertical, forward_distance = (double)forward, pm_forward_distance = (double)pm_forward, pm_vertical_distance = (double)pm_vertical });
     }
 
-    private void InitMembershipFuncs()
+    public void Hit()
     {
-        //mf_values_.Add(new List<MembershipFunctionValues>());
-        //mf_values_[0].Add(new MembershipFunctionValues("Far Behind", -65, -30, -20, -15));
-        //mf_values_[0].Add(new MembershipFunctionValues("Behind", -20, -15, -10, -4));
-        //mf_values_[0].Add(new MembershipFunctionValues("Alongside", -5, 0, 0, 5));
-        //mf_values_[0].Add(new MembershipFunctionValues("In Front", 4, 10, 15, 20));
-        //mf_values_[0].Add(new MembershipFunctionValues("Far In Front", 15, 20, 30, 65));
+        hits_++;
+        hit_counter_.GetComponent<TMP_Text>().text = hits_.ToString();
 
-        //mf_values_.Add(new List<MembershipFunctionValues>());
-        //mf_values_[1].Add(new MembershipFunctionValues("Far Below", -15, -8, -7, -5));
-        //mf_values_[1].Add(new MembershipFunctionValues("Below", -7, -5, -3, -0.5f));
-        //mf_values_[1].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
-        //mf_values_[1].Add(new MembershipFunctionValues("Above", 0.5f, 3, 5, 7));
-        //mf_values_[1].Add(new MembershipFunctionValues("Far Above", 5, 7, 8, 15));
+        if(testing_)
+        {
+            missiles_completed_++;
+            if(missiles_completed_ == 100)
+            {
+                testing_ = false;
+                test_manager_.GetComponent<TestManager>().CompletedTest();
+            }
+        }
+    }
 
-        //mf_values_.Add(new List<MembershipFunctionValues>());
-        //mf_values_[2].Add(new MembershipFunctionValues("Far Down", -20, -15, -10, -5));
-        //mf_values_[2].Add(new MembershipFunctionValues("Down", -10, -5, -1, 0));
-        //mf_values_[2].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
-        //mf_values_[2].Add(new MembershipFunctionValues("Up", 0, 1, 5, 10));
-        //mf_values_[2].Add(new MembershipFunctionValues("Far Up", 5, 10, 15, 20));
+    public void Miss()
+    {
+        misses_++;
+        miss_counter_.GetComponent<TMP_Text>().text = misses_.ToString();
 
-        //mf_values_.Add(new List<MembershipFunctionValues>());
-        //mf_values_[3].Add(new MembershipFunctionValues("Far Left", -30, -30, -15, -10));
-        //mf_values_[3].Add(new MembershipFunctionValues("Left", -15, -10, -5, -0.5f));
-        //mf_values_[3].Add(new MembershipFunctionValues("None", -1, 0, 0, 1));
-        //mf_values_[3].Add(new MembershipFunctionValues("Right", 0.5f, 5, 10, 15));
-        //mf_values_[3].Add(new MembershipFunctionValues("Far Right", 10, 15, 30, 30));
+        if (testing_)
+        {
+            missiles_completed_++;
+            if (missiles_completed_ == 100)
+            {
+                testing_ = false;
+                test_manager_.GetComponent<TestManager>().CompletedTest();
+            }
+        }
+    }
 
-        //mf_values_.Add(new List<MembershipFunctionValues>());
-        //mf_values_[4].Add(new MembershipFunctionValues("Far Left", -50, -15, -10, -5));
-        //mf_values_[4].Add(new MembershipFunctionValues("Left", -10, -5, -1, 0));
-        //mf_values_[4].Add(new MembershipFunctionValues("None", -0.5f, 0, 0, 0.5f));
-        //mf_values_[4].Add(new MembershipFunctionValues("Right", 0, 1, 5, 10));
-        //mf_values_[4].Add(new MembershipFunctionValues("Far Right", 5, 10, 15, 50));
+    public void ShotDown()
+    {
+        downed_++;
+        downed_counter_.GetComponent<TMP_Text>().text = downed_.ToString();
 
+        if (testing_)
+        {
+            missiles_completed_++;
+            if (missiles_completed_ == 100)
+            {
+                testing_ = false;
+                test_manager_.GetComponent<TestManager>().CompletedTest();
+            }
+        }
+    }
+
+    private void InitMembershipFuncsAndRules()
+    {
         forward_distance_ = new LinguisticVariable("forward_distance");
-        very_behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far Behind", -65, -30, -20, -15);
+        very_behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far Behind", -60, -30, -20, -15);
         behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Behind", -20, -15, -10, -4);
-        //alongside_target.function = forward_distance_.MembershipFunctions.AddTriangle("Alongside", -5, 0, 5);
         alongside_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Alongside", -5, 0, 0, 5);
         in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("In Front", 4, 10, 15, 20);
-        very_in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far In Front", 15, 20, 30, 65);
+        very_in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far In Front", 15, 20, 30, 60);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[0].Add(very_behind_target);
         membership_functions_[0].Add(behind_target);
@@ -148,12 +173,11 @@ public class FuzzyBrain : MonoBehaviour
         membership_functions_[0].Add(very_in_front_of_target);
 
         vertical_distance_ = new LinguisticVariable("vertical_distance");
-        very_below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Below", -15, -8, -7, -5);
-        below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Below", -7, -5, -3, -0.5f);
-        //same_height.function = vertical_distance_.MembershipFunctions.AddTriangle("None", -1, 0, 1);
+        very_below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Below", -25, -15, -10, -5);
+        below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Below", -7, -5, -3, -0.1f);
         same_height.function = vertical_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
-        above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Above", 0.5f, 3, 5, 7);
-        very_above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Above", 5, 7, 8, 15);
+        above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Above", 0.1f, 3, 5, 7);
+        very_above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Above", 5, 10, 15, 25);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[1].Add(very_below_target);
         membership_functions_[1].Add(below_target);
@@ -163,10 +187,9 @@ public class FuzzyBrain : MonoBehaviour
 
         vertical_direction_ = new LinguisticVariable("vertical_direction");
         move_alot_down.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Far Down", -20, -15, -10, -5);
-        move_down.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Down", -10, -5, -1, 0);
-        //stay_same_height.function = vertical_direction_.MembershipFunctions.AddTriangle("None", -0.5f, 0, 0.5f);
-        stay_same_height.function = vertical_direction_.MembershipFunctions.AddTrapezoid("None", -0.5f, 0, 0, 0.5f);
-        move_up.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Up", 0, 1, 5, 10);
+        move_down.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Down", -10, -5, -1, 0.1f);
+        stay_same_height.function = vertical_direction_.MembershipFunctions.AddTrapezoid("None", -1f, 0, 0, 1f);
+        move_up.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Up", 0.1f, 1, 5, 10);
         move_alot_up.function = vertical_direction_.MembershipFunctions.AddTrapezoid("Far Up", 5, 10, 15, 20);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[2].Add(move_alot_down);
@@ -176,12 +199,11 @@ public class FuzzyBrain : MonoBehaviour
         membership_functions_[2].Add(move_alot_up);
 
         sideways_distance_ = new LinguisticVariable("sideways_distance");
-        very_left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Left", -30, -30, -15, -10);
-        left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Left", -15, -10, -5, -0.5f);
-        //inline_with_target.function = sideways_distance_.MembershipFunctions.AddTriangle("None", -1, 0, 1);
+        very_left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Left", -42, -30, -15, -10);
+        left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Left", -15, -10, -5, -0.1f);
         inline_with_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
-        right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Right", 0.5f, 5, 10, 15);
-        very_right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Right", 10, 15, 30, 30);
+        right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Right", 0.1f, 5, 10, 15);
+        very_right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Right", 10, 15, 30, 42);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[3].Add(very_left_of_target);
         membership_functions_[3].Add(left_of_target);
@@ -190,66 +212,94 @@ public class FuzzyBrain : MonoBehaviour
         membership_functions_[3].Add(very_right_of_target);
 
         sideways_direction_ = new LinguisticVariable("sideways_direction");
-        steer_alot_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Left", -50, -15, -10, -5);
-        steer_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Left", -10, -5, -1, 0);
-        //stay_centred.function = sideways_direction_.MembershipFunctions.AddTriangle("None", -0.5f, 0, 0.5f);
-        stay_centred.function = sideways_direction_.MembershipFunctions.AddTrapezoid("None", -0.5f, 0, 0, 0.5f);
-        steer_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Right", 0, 1, 5, 10);
-        steer_alot_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Right", 5, 10, 15, 50);
+        steer_alot_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Left", -50, -30, -10, -5);
+        steer_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Left", -10, -5, -1, -0.1f);
+        stay_centred.function = sideways_direction_.MembershipFunctions.AddTrapezoid("None", -1f, 0, 0, 1f);
+        steer_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Right", 0.1f, 1, 5, 10);
+        steer_alot_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Right", 5, 10, 30, 50);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[4].Add(steer_alot_left);
         membership_functions_[4].Add(steer_left);
         membership_functions_[4].Add(stay_centred);
         membership_functions_[4].Add(steer_right);
         membership_functions_[4].Add(steer_alot_right);
+
+        player_missile_sideways_distance_ = new LinguisticVariable("pm_side_distance");
+        player_missile_vertical_distance_ = new LinguisticVariable("pm_vertical_distance");
+        player_missile_forward_distance_ = new LinguisticVariable("pm_forward_distance");
     }
 
     void CreateFuzzyEngines()
     {
-        vertical_engine_ = new FuzzyEngineFactory().Default();
-        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target.function)).Then(vertical_direction_.Is(move_alot_down.function));
-        var vertical_rule_x = Rule.If(vertical_distance_.Is(above_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_down.function));
-        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target.function)).Then(vertical_direction_.Is(move_down.function));
-        var vertical_rule_3 = Rule.If(vertical_distance_.Is(same_height.function)).Then(vertical_direction_.Is(stay_same_height.function));
-        var vertical_rule_4 = Rule.If(vertical_distance_.Is(below_target.function)).Then(vertical_direction_.Is(move_up.function));
-        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_up.function));
-        var vertical_rule_y = Rule.If(vertical_distance_.Is(very_below_target.function)).Then(vertical_direction_.Is(move_alot_up.function));
-        vertical_engine_.Rules.Add(vertical_rule_1, vertical_rule_2, vertical_rule_3, vertical_rule_4, vertical_rule_5, vertical_rule_x, vertical_rule_y);
-
         sideways_engine_ = new FuzzyEngineFactory().Default();
-        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target.function)).Then(sideways_direction_.Is(steer_alot_left.function));
+
+        var pm_sideways_rule_1 = Rule.If(player_missile_sideways_distance_.Is(right_of_target.function).Or(player_missile_sideways_distance_.Is(inline_with_target.function)).And(player_missile_forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_right.function));
+        var pm_sideways_rule_2 = Rule.If(player_missile_forward_distance_.Is(alongside_target.function).And(player_missile_sideways_distance_.Is(left_of_target.function))).Then(sideways_direction_.Is(steer_left.function));
+
+        var pm_vertical_rule_1 = Rule.If(player_missile_vertical_distance_.Is(above_target.function).Or(player_missile_vertical_distance_.Is(same_height.function)).And(player_missile_forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_up.function));
+        var pm_vertical_rule_2 = Rule.If(player_missile_forward_distance_.Is(alongside_target.function).And(player_missile_vertical_distance_.Is(below_target.function))).Then(vertical_direction_.Is(move_down.function));
+
+        var sideways_rule_0 = Rule.If(sideways_distance_.Is(very_right_of_target.function)).Then(sideways_direction_.Is(steer_alot_left.function));
+        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(sideways_direction_.Is(steer_left.function));
         var side_test_rule = Rule.If(sideways_distance_.Is(right_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_left.function));
         var sideways_rule_2 = Rule.If(sideways_distance_.Is(right_of_target.function)).Then(sideways_direction_.Is(steer_left.function));
         var sideways_rule_3 = Rule.If(sideways_distance_.Is(inline_with_target.function)).Then(sideways_direction_.Is(stay_centred.function));
         var sideways_rule_4 = Rule.If(sideways_distance_.Is(left_of_target.function)).Then(sideways_direction_.Is(steer_right.function));
         var side_test_rule2 = Rule.If(sideways_distance_.Is(left_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_right.function));
         var sideways_rule_5 = Rule.If(sideways_distance_.Is(very_left_of_target.function)).Then(sideways_direction_.Is(steer_alot_right.function));
-        sideways_engine_.Rules.Add(sideways_rule_1, sideways_rule_2, sideways_rule_3, sideways_rule_4, sideways_rule_5, side_test_rule, side_test_rule2);
+        var sideways_rule_6 = Rule.If(sideways_distance_.Is(very_left_of_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(sideways_direction_.Is(steer_right.function));
+        sideways_engine_.Rules.Add(sideways_rule_0, sideways_rule_1, sideways_rule_2, sideways_rule_3, sideways_rule_4, sideways_rule_5, side_test_rule, side_test_rule2, sideways_rule_6, pm_sideways_rule_1, pm_sideways_rule_2);
+
+        vertical_engine_ = new FuzzyEngineFactory().Default();
+        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target.function)).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_a = Rule.If(vertical_distance_.Is(very_above_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(vertical_direction_.Is(move_down.function));
+        var vertical_rule_x = Rule.If(vertical_distance_.Is(above_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target.function)).Then(vertical_direction_.Is(move_down.function));
+        var vertical_rule_3 = Rule.If(vertical_distance_.Is(same_height.function)).Then(vertical_direction_.Is(stay_same_height.function));
+        var vertical_rule_4 = Rule.If(vertical_distance_.Is(below_target.function)).Then(vertical_direction_.Is(move_up.function));
+        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_up.function));
+        var vertical_rule_y = Rule.If(vertical_distance_.Is(very_below_target.function)).Then(vertical_direction_.Is(move_alot_up.function));
+        var vertical_rule_b = Rule.If(vertical_distance_.Is(very_below_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(vertical_direction_.Is(move_up.function));
+        vertical_engine_.Rules.Add(vertical_rule_1, vertical_rule_2, vertical_rule_3, vertical_rule_4, vertical_rule_5, vertical_rule_x, vertical_rule_y, vertical_rule_a, vertical_rule_b, pm_vertical_rule_1, pm_vertical_rule_2);
     }
 
     private void FixedUpdate()
     {
-        //Debug.Log(mf_values_[0].function.Name + " " + mf_values_[0].values[0]);
+        missile_fire_timer_ += Time.deltaTime;
         switch(movement_)
         {
             case MovementType.Random:
-                if(transform.position.x == target_position_.x && transform.position.y == target_position_.y)
+                if(!testing_ || missiles_fired_ < 100) { 
+                    if (missile_fire_timer_ >= 1f / missiles_per_second)
+                    {
+                        missile_fire_timer_ = 0;
+                        var new_missile = Instantiate(missile_, transform.position, Quaternion.identity);
+                        new_missile.GetComponent<FuzzyMissile>().InitMissile(this, missile_forward_speed_, !transform.GetChild(0).gameObject.active);
+                    }
+                }
+                if (transform.position.x == target_position_.x && transform.position.y == target_position_.y)
                 {
-                    var new_missile = Instantiate(missile_, transform.position, Quaternion.identity);
-                    new_missile.GetComponent<FuzzyMissile>().InitMissile(this, missile_forward_speed_, !transform.GetChild(0).gameObject.active);
-
                     target_position_.x = Random.Range(-x_position_limit_, x_position_limit_);
                     target_position_.y = Random.Range(0, y_position_limit_);
                 }
-                else
-                {
-                    transform.position = Vector3.MoveTowards(transform.position, target_position_, move_speed_ * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, target_position_, move_speed_ * Time.deltaTime);
 
-                    // Smoothly tilt helicopter mesh according to direction
-                    float x_delta = target_position_.x - transform.position.x;
-                    float tiltAroundZ = (x_delta > 0 ? 1 : -1) * 15;
-                    Quaternion target = Quaternion.Euler(-79, 180, tiltAroundZ);
-                    transform.GetChild(0).localRotation = Quaternion.Slerp(transform.GetChild(0).localRotation, target, Time.deltaTime * 3);
+                // Smoothly tilt helicopter mesh according to direction
+                float x_delta = target_position_.x - transform.position.x;
+                float tiltAroundZ = (x_delta > 0 ? 1 : -1) * 15;
+                Quaternion target = Quaternion.Euler(-79, 180, tiltAroundZ);
+                transform.GetChild(0).localRotation = Quaternion.Slerp(transform.GetChild(0).localRotation, target, Time.deltaTime * 3);
+                
+                break;
+            case MovementType.Stationary:
+                if (!testing_ || missiles_fired_ < 100)
+                {
+                    if (missile_fire_timer_ >= 1f / missiles_per_second)
+                    {
+                        missile_fire_timer_ = 0;
+                        var new_missile = Instantiate(missile_, transform.position, Quaternion.identity);
+                        new_missile.GetComponent<FuzzyMissile>().InitMissile(this, missile_forward_speed_, !transform.GetChild(0).gameObject.active);
+                    }
                 }
                 break;
             default: break;
@@ -288,8 +338,8 @@ public class FuzzyBrain : MonoBehaviour
         {
             membership_dropdown_.options[i].text = membership_functions_[linguistic_var][i].function.Name;
         }
-        membership_dropdown_.transform.GetChild(0).GetComponent<TMP_Text>().text = membership_dropdown_.options[0].text;
-        DisplayValueInputs(0);
+        membership_dropdown_.transform.GetChild(0).GetComponent<TMP_Text>().text = membership_dropdown_.options[currently_selected_membership_].text;
+        DisplayValueInputs(currently_selected_membership_);
 
         float[] x_values = new float[20];
         float[] y_values = new float[20] { Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue };
@@ -366,11 +416,10 @@ public class FuzzyBrain : MonoBehaviour
 
     public void UpdateMembershipValues()
     {
-        //if (currently_selected_membership_ == 2)
-        //{
         float val1 = float.Parse(value1_.text);
         float val2 = float.Parse(value2_.text);
         float val3 = float.Parse(value3_.text);
+        float val4 = float.Parse(value4_.text);
 
         ref LinguisticVariable lingustic = ref forward_distance_;
 
@@ -391,64 +440,52 @@ public class FuzzyBrain : MonoBehaviour
             default: break;
         }
 
-        //if (currently_selected_membership_ == 2)
-        //{
-        //    // TriangleMembershipFunction new_function;
-        //    string func_name = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function.Name;
-        //    membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function = new TriangleMembershipFunction(func_name, val1, val2, val3);
-        //    lingustic.MembershipFunctions[2] = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function;
-        //}
-        //else
-        //{
-            float val4 = float.Parse(value4_.text);
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[2] = val3;
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[3] = val4;
-
-            string func_name = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function.Name;
-            membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function = new TrapezoidMembershipFunction(func_name, val1, val2, val3, val4);
-            lingustic.MembershipFunctions[currently_selected_membership_] = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function;
-        //}
+        string func_name = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function.Name;
+        membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function = new TrapezoidMembershipFunction(func_name, val1, val2, val3, val4);
+        lingustic.MembershipFunctions[currently_selected_membership_] = membership_functions_[currently_selected_linguistic_][currently_selected_membership_].function;
 
         CreateFuzzyEngines();
-        //}
-       // else
-       // {
-
-           // string function_name = mf_values_[currently_selected_linguistic_][currently_selected_membership_].function_name;
-
-            //if (currently_selected_linguistic_ == 0)
-            //{
-            //    forward_distance_.MembershipFunctions.Remove(mf_values_[currently_selected_linguistic_][currently_selected_membership_].function);
-            //    mf_values_[currently_selected_linguistic_][currently_selected_membership_].function = forward_distance_.MembershipFunctions.AddTrapezoid(function_name, val1, val2, val3, val4);
-            //}
-            //else if (currently_selected_linguistic_ == 1)
-            //{
-            //    vertical_distance_.MembershipFunctions.Remove(mf_values_[currently_selected_linguistic_][currently_selected_membership_].function);
-            //    mf_values_[currently_selected_linguistic_][currently_selected_membership_].function = vertical_distance_.MembershipFunctions.AddTrapezoid(function_name, val1, val2, val3, val4);
-            //}
-            //else if (currently_selected_linguistic_ == 2)
-            //{
-            //    vertical_direction_.MembershipFunctions.Remove(mf_values_[currently_selected_linguistic_][currently_selected_membership_].function);
-            //    mf_values_[currently_selected_linguistic_][currently_selected_membership_].function = vertical_direction_.MembershipFunctions.AddTrapezoid(function_name, val1, val2, val3, val4);
-            //}
-            //else if (currently_selected_linguistic_ == 3)
-            //{
-            //    sideways_distance_.MembershipFunctions.Remove(mf_values_[currently_selected_linguistic_][currently_selected_membership_].function);
-            //    mf_values_[currently_selected_linguistic_][currently_selected_membership_].function = sideways_distance_.MembershipFunctions.AddTrapezoid(function_name, val1, val2, val3, val4);
-            //}
-            //else if (currently_selected_linguistic_ == 4)
-            //{
-            //    sideways_direction_.MembershipFunctions.Remove(mf_values_[currently_selected_linguistic_][currently_selected_membership_].function);
-            //    mf_values_[currently_selected_linguistic_][currently_selected_membership_].function = sideways_direction_.MembershipFunctions.AddTrapezoid(function_name, val1, val2, val3, val4);
-            //}
-
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[0] = val1;
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[1] = val2;
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[2] = val3;
-            //mf_values_[currently_selected_linguistic_][currently_selected_membership_].values[3] = val4;
-
-       // }
-
         UpdateGraph(currently_selected_linguistic_);
+    }
+
+    public void BatchUpdateMembershipValues(List<float[]> values)
+    {
+        ref LinguisticVariable lingustic = ref forward_distance_;
+        switch (currently_selected_linguistic_)
+        {
+            case 1:
+                lingustic = ref vertical_distance_;
+                break;
+            case 2:
+                lingustic = ref vertical_direction_;
+                break;
+            case 3:
+                lingustic = ref sideways_distance_;
+                break;
+            case 4:
+                lingustic = ref sideways_direction_;
+                break;
+            default: break;
+        }
+
+        for(int i = 0; i < 5; i++)
+        {
+            string func_name = membership_functions_[currently_selected_linguistic_][i].function.Name;
+            membership_functions_[currently_selected_linguistic_][i].function = new TrapezoidMembershipFunction(func_name, values[i][0], values[i][1], values[i][2], values[i][3]);
+            lingustic.MembershipFunctions[i] = membership_functions_[currently_selected_linguistic_][i].function;
+        }
+
+        CreateFuzzyEngines();
+        UpdateGraph(currently_selected_linguistic_);
+    }
+
+    public void RunTest()
+    {
+        testing_ = true;
+        missiles_fired_ = missiles_completed_ = 0;
+        hits_ = misses_ = downed_ = 0;
+        hit_counter_.GetComponent<TMP_Text>().text = "0";
+        miss_counter_.GetComponent<TMP_Text>().text = "0";
+        downed_counter_.GetComponent<TMP_Text>().text = "0";
     }
 }
