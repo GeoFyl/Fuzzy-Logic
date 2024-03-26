@@ -29,10 +29,10 @@ public class FuzzyMissile : MonoBehaviour {
 
     void FixedUpdate()
     {
+        // Counts as a miss when goes out of camera viewport
         Vector3 viewpoint = camera_.WorldToViewportPoint(transform.position);
         if(viewpoint.x < 0 || viewpoint.x > 1 || viewpoint.y < 0 || viewpoint.y > 1)
         {
-            //Debug.Log("Missile missed target");
             brain_.Miss();
             Destroy(gameObject);
         }
@@ -61,25 +61,14 @@ public class FuzzyMissile : MonoBehaviour {
             pm_vertical_dist = transform.position.y - closest_missile.transform.position.y;
         }
 
-        // Convert position of player to value
+        // Convert position of player to value and use fuzzy inference to find new velocity
         float target_forward_distance = transform.position.z - player_.transform.position.z;
         float sideways_result = brain_.DefuzzifySideways(transform.position.x - player_.transform.position.x, target_forward_distance, pm_forward_dist, pm_side_dist);
         float vertical_result = brain_.DefuzzifyVertical(transform.position.y - player_.transform.position.y, target_forward_distance, pm_forward_dist, pm_vertical_dist);
-
-            
-        //Debug.Log("forward distance: " + (transform.position.z - player_.transform.position.z) + ", result: " + forward_result);
-        //Debug.Log("vertical distance: " + (transform.position.y - player_.transform.position.y) + ", result: " + vertical_result);
-        //Debug.Log("forward distance: " + (transform.position.z - player_.transform.position.z) + ", sideways distance: " + (transform.position.x - player_.transform.position.x) + ", result: " + sideways_result);
-        // Debug.Log("sideways result: " + sideways_result + ", forward result: " + forward_result);
-
         Rigidbody rigidbody = GetComponent<Rigidbody>();
-        // rigidbody.AddForce(new Vector3((float)sideways_result, (float)vertical_result, (float)forward_result));
-        //rigidbody.velocity = transform.TransformDirection(new Vector3(-(float)sideways_result, (float)vertical_result, forward_speed_));
         rigidbody.velocity = new Vector3(sideways_result, vertical_result, -forward_speed_);
 
-        //rigidbody.velocity = new Vector3((float)sideways_result, (float)vertical_result, (float)forward_result);
         transform.rotation = Quaternion.LookRotation(rigidbody.velocity == Vector3.zero ? transform.forward : rigidbody.velocity);
-        //Debug.Log("velocity: " + rigidbody.velocity.ToString());
     }
 
     private void OnCollisionEnter(Collision collision)

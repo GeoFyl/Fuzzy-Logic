@@ -31,7 +31,7 @@ public class TestManager : MonoBehaviour
     int linguistic_index_ = 0, variation_index_ = 0;
 
     // { value, variation index }
-    int[] highest_hits_ = new int[2] { int.MinValue, 0 }, lowest_misses_ = new int[2] { int.MinValue, 0 }, lowest_downed_ = new int[2] { int.MinValue, 0 }, lowest_misses_and_downed_ = new int[2] { int.MinValue, 0 };
+    int[] highest_hits_ = new int[2] { int.MinValue, 0 }, lowest_misses_ = new int[2] { int.MaxValue, 0 }, lowest_downed_ = new int[2] { int.MaxValue, 0 }, lowest_misses_and_downed_ = new int[2] { int.MaxValue, 0 };
 
     bool running_single_test_ = true;
 
@@ -63,7 +63,6 @@ public class TestManager : MonoBehaviour
         {
             for(int j = 1; j < 10; j++)
             {
-                //membership_function_variations[i].Add(new List<float[]>(membership_function_variations[i][0]));
                 membership_function_variations[i].Add(new List<float[]>());
                 foreach (float[] mf in membership_function_variations[i][0])
                 {
@@ -71,85 +70,41 @@ public class TestManager : MonoBehaviour
                 }
 
                 // Generate middle trapezoid
-                //Debug.Log("---middle---");
-                //Debug.Log("original: " + membership_function_variations[i][j][2][0] + ", " + membership_function_variations[i][j][2][1] + ", " + membership_function_variations[i][j][2][2] + ", " + membership_function_variations[i][j][2][3]);
                 float mf_range = membership_function_variations[i][j][2][3] - membership_function_variations[i][j][2][0];
                 float offset = Random.Range(-mf_range / 2f, mf_range / 2f);
-                //Debug.Log("range: " + mf_range + ", offset: " + offset);
                 membership_function_variations[i][j][2][0] -= offset;
-                //Debug.Log("new 0: " + membership_function_variations[i][j][2][0]);
                 membership_function_variations[i][j][2][3] += offset;
-                //Debug.Log("new 3: " + membership_function_variations[i][j][2][3]);
                 membership_function_variations[i][j][2][1] = Random.Range(membership_function_variations[i][j][2][0], membership_function_variations[i][j][2][3]);
-                //Debug.Log("new 1: " + membership_function_variations[i][j][2][1]);
                 membership_function_variations[i][j][2][2] = Random.Range(membership_function_variations[i][j][2][1], membership_function_variations[i][j][2][3]);
-                //Debug.Log("new 2: " + membership_function_variations[i][j][2][2]);
 
                 // Generate middle left trapezoid
-                //Debug.Log("---middle left---");
-                //Debug.Log("original: " + membership_function_variations[i][j][1][0] + ", " + membership_function_variations[i][j][1][1] + ", " + membership_function_variations[i][j][1][2] + ", " + membership_function_variations[i][j][1][3]);
                 mf_range = membership_function_variations[i][j][1][3] - membership_function_variations[i][j][1][0];
                 offset = Random.Range(-mf_range / 2f, mf_range / 2f);
-                //Debug.Log("range: " + mf_range + ", offset: " + offset);
                 membership_function_variations[i][j][1][0] += offset;
-                //Debug.Log("new 0: " + membership_function_variations[i][j][1][0]);
                 membership_function_variations[i][j][1][3] = Random.Range(membership_function_variations[i][j][2][0], membership_function_variations[i][j][2][1]);
-                //Debug.Log("new 3: " + membership_function_variations[i][j][1][3]);
                 membership_function_variations[i][j][1][2] = Random.Range(membership_function_variations[i][j][1][0], membership_function_variations[i][j][1][3]);
-                //Debug.Log("new 1: " + membership_function_variations[i][j][1][1]);
                 membership_function_variations[i][j][1][1] = Random.Range(membership_function_variations[i][j][1][0], membership_function_variations[i][j][1][2]);
-                //Debug.Log("new 2: " + membership_function_variations[i][j][1][2]);
 
                 // Generate middle right trapezoid
-                //Debug.Log("---middle right---");
-                //Debug.Log("original: " + membership_function_variations[i][j][3][0] + ", " + membership_function_variations[i][j][3][1] + ", " + membership_function_variations[i][j][3][2] + ", " + membership_function_variations[i][j][3][3]);
                 mf_range = membership_function_variations[i][j][3][3] - membership_function_variations[i][j][3][0];
                 offset = Random.Range(-mf_range / 2f, mf_range / 2f);
-                //Debug.Log("range: " + mf_range + ", offset: " + offset);
                 membership_function_variations[i][j][3][0] = Random.Range(membership_function_variations[i][j][2][2], membership_function_variations[i][j][2][3]);
-                //Debug.Log("new 0: " + membership_function_variations[i][j][3][0]);
                 membership_function_variations[i][j][3][3] += offset;
-                //Debug.Log("new 3: " + membership_function_variations[i][j][3][3]);
                 membership_function_variations[i][j][3][1] = Random.Range(membership_function_variations[i][j][3][0], membership_function_variations[i][j][3][3]);
-                //Debug.Log("new 1: " + membership_function_variations[i][j][3][1]);
                 membership_function_variations[i][j][3][2] = Random.Range(membership_function_variations[i][j][3][1], membership_function_variations[i][j][3][3]);
-                //Debug.Log("new 2: " + membership_function_variations[i][j][3][2]);
-
-                //// Generate leftmost trapezoid
-                //mf_range = membership_function_variations[i][j][0][3] - membership_function_variations[i][j][0][0];
-                //membership_function_variations[i][j][0][3] += Random.Range(-mf_range / 2f, mf_range / 2f);
-                //membership_function_variations[i][j][0][2] = Random.Range(membership_function_variations[i][j][0][0], membership_function_variations[i][j][0][3]);
-                //membership_function_variations[i][j][0][1] = Random.Range(membership_function_variations[i][j][0][0], membership_function_variations[i][j][0][2]);
-
-                //// Generate rightmost trapezoid
-                //mf_range = membership_function_variations[i][j][4][3] - membership_function_variations[i][j][4][0];
-                //membership_function_variations[i][j][4][0] += Random.Range(-mf_range / 2f, mf_range / 2f);
-                //membership_function_variations[i][j][4][1] = Random.Range(membership_function_variations[i][j][4][0], membership_function_variations[i][j][4][3]);
-                //membership_function_variations[i][j][4][2] = Random.Range(membership_function_variations[i][j][4][1], membership_function_variations[i][j][4][3]);
 
                 // Generate rightmost trapezoid
-                //Debug.Log("---rightmost---");
-                //Debug.Log("original: " + membership_function_variations[i][j][4][0] + ", " + membership_function_variations[i][j][4][1] + ", " + membership_function_variations[i][j][4][2] + ", " + membership_function_variations[i][j][4][3]);
                 membership_function_variations[i][j][4][0] = Random.Range(membership_function_variations[i][j][3][2], membership_function_variations[i][j][3][3]);
-                //Debug.Log("new 0: " + membership_function_variations[i][j][4][0]);
                 membership_function_variations[i][j][4][1] = Random.Range(membership_function_variations[i][j][4][0], membership_function_variations[i][j][4][3]);
-                //Debug.Log("new 1: " + membership_function_variations[i][j][4][1]);
                 membership_function_variations[i][j][4][2] = Random.Range(membership_function_variations[i][j][4][1], membership_function_variations[i][j][4][3]);
-                //Debug.Log("new 2: " + membership_function_variations[i][j][4][2]);
 
                 // Generate leftmost trapezoid
-                //Debug.Log("---leftmost---");
-                //Debug.Log("original: " + membership_function_variations[i][j][0][0] + ", " + membership_function_variations[i][j][0][1] + ", " + membership_function_variations[i][j][0][2] + ", " + membership_function_variations[i][j][0][3]);
                 membership_function_variations[i][j][0][3] = Random.Range(membership_function_variations[i][j][1][0], membership_function_variations[i][j][1][1]);
-                //Debug.Log("new 0: " + membership_function_variations[i][j][4][0]);
                 membership_function_variations[i][j][0][2] = Random.Range(membership_function_variations[i][j][0][0], membership_function_variations[i][j][0][3]);
-                //Debug.Log("new 1: " + membership_function_variations[i][j][4][1]);
                 membership_function_variations[i][j][0][1] = Random.Range(membership_function_variations[i][j][0][0], membership_function_variations[i][j][0][2]);
-                //Debug.Log("new 2: " + membership_function_variations[i][j][4][2]);
 
             }
         }
-
 
         writer = new StreamWriter("Assets/Results.txt", true);
         writer.WriteLine("========= Results =========");
@@ -169,7 +124,7 @@ public class TestManager : MonoBehaviour
             Destroy(m);
         }
 
-        brain_.BatchUpdateMembershipValues(membership_function_variations[linguistic_index_][variation_index_]);
+        brain_.BatchUpdateMembershipValues(linguistic_index_, membership_function_variations[linguistic_index_][variation_index_]);
 
         brain_.RunTest();
         pause_menu_.GetComponent<PauseMenu>().Resume();
@@ -236,10 +191,10 @@ public class TestManager : MonoBehaviour
                 writer.WriteLine("Most hits: " + highest_hits_[1] + ", Least misses: " + lowest_misses_[1] + ", Least downed: " + lowest_downed_[1] + ", Least misses and downed: " + lowest_misses_and_downed_[1]);
 
                 highest_hits_ = new int[2] { int.MinValue, 0 };
-                lowest_misses_ = lowest_downed_ = lowest_misses_and_downed_ = new int[2] { int.MinValue, 0 };
+                lowest_misses_ = lowest_downed_ = lowest_misses_and_downed_ = new int[2] { int.MaxValue, 0 };
 
                 // reset to default
-                brain_.BatchUpdateMembershipValues(membership_function_variations[linguistic_index_][0]);
+                brain_.BatchUpdateMembershipValues(linguistic_index_, membership_function_variations[linguistic_index_][0]);
 
                 linguistic_index_++;
                 if (linguistic_index_ > membership_function_variations.Count - 1)

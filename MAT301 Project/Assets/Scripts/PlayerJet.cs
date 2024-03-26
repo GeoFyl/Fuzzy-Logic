@@ -52,8 +52,9 @@ public class Jet : MonoBehaviour
         player_controlled_ = false;
         GetComponent<Rigidbody>().useGravity = false;
         target_position_.x = Random.Range(-x_position_limit_ + 0.5f, x_position_limit_ - 0.5f);
+        target_position_.z = Random.Range(-z_position_limit_ + 0.5f, z_position_limit_ - 0.5f);
         target_position_.y = Random.Range(0.5f, y_position_limit_ - 0.5f);
-        target_position_.z = transform.position.z;
+
     }
 
     public void EndTesting()
@@ -98,9 +99,10 @@ public class Jet : MonoBehaviour
         else
         {
             transform.position = Vector3.MoveTowards(transform.position, target_position_, testing_movement_speed * Time.deltaTime);
-            if (transform.position.x == target_position_.x && transform.position.y == target_position_.y)
+            if (transform.position.y == target_position_.y && transform.position.x == target_position_.x && transform.position.z == target_position_.z)
             {
                 target_position_.x = Random.Range(-x_position_limit_ + 0.5f, x_position_limit_ - 0.5f);
+                target_position_.z = Random.Range(-z_position_limit_ + 0.5f, z_position_limit_ - 0.5f);
                 target_position_.y = Random.Range(0.5f, y_position_limit_ - 0.5f);
             }
 

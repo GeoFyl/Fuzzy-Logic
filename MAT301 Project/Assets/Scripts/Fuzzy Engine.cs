@@ -12,17 +12,8 @@ using TMPro;
 using System.Linq;
 using Unity.VisualScripting;
 
-//public class MembershipFunctionValues : MonoBehaviour
-//{
-//    public IMembershipFunction function;
-//    public float[] values;
-//}
-
 public class FuzzyBrain : MonoBehaviour
 {
-
-   // List<GameObject> graph_lines_ = new List<GameObject>();
-
     enum MovementType { Random, Stationary };
     [SerializeField]
     MovementType movement_ = MovementType.Random;
@@ -91,7 +82,7 @@ public class FuzzyBrain : MonoBehaviour
         target_position_.z = transform.position.z;
 
         // ---------- Setup Membership Function values -----------
-        InitMembershipFuncsAndRules();
+        InitMembershipFuncs();
         CreateFuzzyEngines();
 
         InitGraph();
@@ -99,11 +90,13 @@ public class FuzzyBrain : MonoBehaviour
         UpdateGraph(0);
     }
 
+    //Called by missile to defuzzify sideways
     public float DefuzzifySideways(float sideways, float forward, float pm_forward, float pm_side)
     {
         return (float)sideways_engine_.Defuzzify(new { sideways_distance = (double)sideways, forward_distance = (double)forward, pm_forward_distance = (double)pm_forward, pm_side_distance = (double)pm_side});
     }
 
+    //Called by missile to defuzzify vertical
     public float DefuzzifyVertical(float vertical, float forward, float pm_forward, float pm_vertical)
     {
         return (float)vertical_engine_.Defuzzify(new { vertical_distance = (double)vertical, forward_distance = (double)forward, pm_forward_distance = (double)pm_forward, pm_vertical_distance = (double)pm_vertical });
@@ -157,14 +150,15 @@ public class FuzzyBrain : MonoBehaviour
         }
     }
 
-    private void InitMembershipFuncsAndRules()
+    // Initialise fuzzy sets
+    private void InitMembershipFuncs()
     {
         forward_distance_ = new LinguisticVariable("forward_distance");
-        very_behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far Behind", -60, -30, -20, -15);
-        behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Behind", -20, -15, -10, -4);
-        alongside_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Alongside", -5, 0, 0, 5);
-        in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("In Front", 4, 10, 15, 20);
-        very_in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far In Front", 15, 20, 30, 60);
+        very_behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far Behind", -60, -58.30882, -53.66272, -17.97618);
+        behind_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Behind", -22.44128, -17.37739, -17.08515, 0.04424119);
+        alongside_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Alongside", -8.626575, 7.284637, 8.053778, 8.626575);
+        in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("In Front", 8.355507, 22.9482, 23.63193, 27.62806);
+        very_in_front_of_target.function = forward_distance_.MembershipFunctions.AddTrapezoid("Far In Front", 25.56501, 58.26857, 59.63116, 60);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[0].Add(very_behind_target);
         membership_functions_[0].Add(behind_target);
@@ -175,7 +169,7 @@ public class FuzzyBrain : MonoBehaviour
         vertical_distance_ = new LinguisticVariable("vertical_distance");
         very_below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Below", -25, -15, -10, -5);
         below_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Below", -7, -5, -3, -0.1f);
-        same_height.function = vertical_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
+        same_height.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Same Height", -1, 0, 0, 1);
         above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Above", 0.1f, 3, 5, 7);
         very_above_target.function = vertical_distance_.MembershipFunctions.AddTrapezoid("Far Above", 5, 10, 15, 25);
         membership_functions_.Add(new List<RefMembershipFunction>());
@@ -201,7 +195,7 @@ public class FuzzyBrain : MonoBehaviour
         sideways_distance_ = new LinguisticVariable("sideways_distance");
         very_left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Left", -42, -30, -15, -10);
         left_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Left", -15, -10, -5, -0.1f);
-        inline_with_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("None", -1, 0, 0, 1);
+        inline_with_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Inline", -1, 0, 0, 1);
         right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Right", 0.1f, 5, 10, 15);
         very_right_of_target.function = sideways_distance_.MembershipFunctions.AddTrapezoid("Far Right", 10, 15, 30, 42);
         membership_functions_.Add(new List<RefMembershipFunction>());
@@ -212,11 +206,11 @@ public class FuzzyBrain : MonoBehaviour
         membership_functions_[3].Add(very_right_of_target);
 
         sideways_direction_ = new LinguisticVariable("sideways_direction");
-        steer_alot_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Left", -50, -30, -10, -5);
-        steer_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Left", -10, -5, -1, -0.1f);
-        stay_centred.function = sideways_direction_.MembershipFunctions.AddTrapezoid("None", -1f, 0, 0, 1f);
-        steer_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Right", 0.1f, 1, 5, 10);
-        steer_alot_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Right", 5, 10, 30, 50);
+        steer_alot_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Left", -50, -49.26415, -23.02056, -10.16195);
+        steer_left.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Left", -10.6641, -8.564794, -4.956827, -0.243949);
+        stay_centred.function = sideways_direction_.MembershipFunctions.AddTrapezoid("None", -0.8008431, 0.1482656, 0.5595238, 0.8008431);
+        steer_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Right", 0.7683588, 4.723279, 7.013867, 8.112687);
+        steer_alot_right.function = sideways_direction_.MembershipFunctions.AddTrapezoid("Far Right", 7.229371, 39.46464, 41.2893, 50);
         membership_functions_.Add(new List<RefMembershipFunction>());
         membership_functions_[4].Add(steer_alot_left);
         membership_functions_[4].Add(steer_left);
@@ -231,40 +225,44 @@ public class FuzzyBrain : MonoBehaviour
 
     void CreateFuzzyEngines()
     {
+        // Setup rules and create engine for sideways movement
         sideways_engine_ = new FuzzyEngineFactory().Default();
 
         var pm_sideways_rule_1 = Rule.If(player_missile_sideways_distance_.Is(right_of_target.function).Or(player_missile_sideways_distance_.Is(inline_with_target.function)).And(player_missile_forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_right.function));
         var pm_sideways_rule_2 = Rule.If(player_missile_forward_distance_.Is(alongside_target.function).And(player_missile_sideways_distance_.Is(left_of_target.function))).Then(sideways_direction_.Is(steer_left.function));
 
+        var sideways_rule_0 = Rule.If(sideways_distance_.Is(very_right_of_target.function)).Then(sideways_direction_.Is(steer_alot_left.function));
+        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target.function).And(forward_distance_.Is(very_in_front_of_target.function))).Then(sideways_direction_.Is(steer_left.function));
+        var sideways_rule_2 = Rule.If(sideways_distance_.Is(right_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_left.function));
+        var sideways_rule_3 = Rule.If(sideways_distance_.Is(right_of_target.function)).Then(sideways_direction_.Is(steer_left.function));
+        var sideways_rule_4 = Rule.If(sideways_distance_.Is(inline_with_target.function)).Then(sideways_direction_.Is(stay_centred.function));
+        var sideways_rule_5 = Rule.If(sideways_distance_.Is(left_of_target.function)).Then(sideways_direction_.Is(steer_right.function));
+        var sideways_rule_6 = Rule.If(sideways_distance_.Is(left_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_right.function));
+        var sideways_rule_7 = Rule.If(sideways_distance_.Is(very_left_of_target.function)).Then(sideways_direction_.Is(steer_alot_right.function));
+        var sideways_rule_8 = Rule.If(sideways_distance_.Is(very_left_of_target.function).And(forward_distance_.Is(very_in_front_of_target.function))).Then(sideways_direction_.Is(steer_right.function));
+        sideways_engine_.Rules.Add(sideways_rule_0, sideways_rule_1, sideways_rule_2, sideways_rule_3, sideways_rule_4, sideways_rule_5, sideways_rule_6, sideways_rule_7, sideways_rule_8, pm_sideways_rule_1, pm_sideways_rule_2);
+
+        // Setup rules and create engine for vertical movement
+        vertical_engine_ = new FuzzyEngineFactory().Default();
+
         var pm_vertical_rule_1 = Rule.If(player_missile_vertical_distance_.Is(above_target.function).Or(player_missile_vertical_distance_.Is(same_height.function)).And(player_missile_forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_up.function));
         var pm_vertical_rule_2 = Rule.If(player_missile_forward_distance_.Is(alongside_target.function).And(player_missile_vertical_distance_.Is(below_target.function))).Then(vertical_direction_.Is(move_down.function));
 
-        var sideways_rule_0 = Rule.If(sideways_distance_.Is(very_right_of_target.function)).Then(sideways_direction_.Is(steer_alot_left.function));
-        var sideways_rule_1 = Rule.If(sideways_distance_.Is(very_right_of_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(sideways_direction_.Is(steer_left.function));
-        var side_test_rule = Rule.If(sideways_distance_.Is(right_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_left.function));
-        var sideways_rule_2 = Rule.If(sideways_distance_.Is(right_of_target.function)).Then(sideways_direction_.Is(steer_left.function));
-        var sideways_rule_3 = Rule.If(sideways_distance_.Is(inline_with_target.function)).Then(sideways_direction_.Is(stay_centred.function));
-        var sideways_rule_4 = Rule.If(sideways_distance_.Is(left_of_target.function)).Then(sideways_direction_.Is(steer_right.function));
-        var side_test_rule2 = Rule.If(sideways_distance_.Is(left_of_target.function).And(forward_distance_.Is(alongside_target.function))).Then(sideways_direction_.Is(steer_alot_right.function));
-        var sideways_rule_5 = Rule.If(sideways_distance_.Is(very_left_of_target.function)).Then(sideways_direction_.Is(steer_alot_right.function));
-        var sideways_rule_6 = Rule.If(sideways_distance_.Is(very_left_of_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(sideways_direction_.Is(steer_right.function));
-        sideways_engine_.Rules.Add(sideways_rule_0, sideways_rule_1, sideways_rule_2, sideways_rule_3, sideways_rule_4, sideways_rule_5, side_test_rule, side_test_rule2, sideways_rule_6, pm_sideways_rule_1, pm_sideways_rule_2);
-
-        vertical_engine_ = new FuzzyEngineFactory().Default();
-        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target.function)).Then(vertical_direction_.Is(move_alot_down.function));
-        var vertical_rule_a = Rule.If(vertical_distance_.Is(very_above_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(vertical_direction_.Is(move_down.function));
-        var vertical_rule_x = Rule.If(vertical_distance_.Is(above_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_down.function));
-        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target.function)).Then(vertical_direction_.Is(move_down.function));
-        var vertical_rule_3 = Rule.If(vertical_distance_.Is(same_height.function)).Then(vertical_direction_.Is(stay_same_height.function));
-        var vertical_rule_4 = Rule.If(vertical_distance_.Is(below_target.function)).Then(vertical_direction_.Is(move_up.function));
-        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_up.function));
-        var vertical_rule_y = Rule.If(vertical_distance_.Is(very_below_target.function)).Then(vertical_direction_.Is(move_alot_up.function));
-        var vertical_rule_b = Rule.If(vertical_distance_.Is(very_below_target.function).And(forward_distance_.Is(very_behind_target.function))).Then(vertical_direction_.Is(move_up.function));
-        vertical_engine_.Rules.Add(vertical_rule_1, vertical_rule_2, vertical_rule_3, vertical_rule_4, vertical_rule_5, vertical_rule_x, vertical_rule_y, vertical_rule_a, vertical_rule_b, pm_vertical_rule_1, pm_vertical_rule_2);
+        var vertical_rule_0 = Rule.If(vertical_distance_.Is(very_above_target.function)).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_1 = Rule.If(vertical_distance_.Is(very_above_target.function).And(forward_distance_.Is(very_in_front_of_target.function))).Then(vertical_direction_.Is(move_down.function));
+        var vertical_rule_2 = Rule.If(vertical_distance_.Is(above_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_down.function));
+        var vertical_rule_3 = Rule.If(vertical_distance_.Is(above_target.function)).Then(vertical_direction_.Is(move_down.function));
+        var vertical_rule_4 = Rule.If(vertical_distance_.Is(same_height.function)).Then(vertical_direction_.Is(stay_same_height.function));
+        var vertical_rule_5 = Rule.If(vertical_distance_.Is(below_target.function)).Then(vertical_direction_.Is(move_up.function));
+        var vertical_rule_6 = Rule.If(vertical_distance_.Is(below_target.function).And(forward_distance_.Is(alongside_target.function))).Then(vertical_direction_.Is(move_alot_up.function));
+        var vertical_rule_7 = Rule.If(vertical_distance_.Is(very_below_target.function)).Then(vertical_direction_.Is(move_alot_up.function));
+        var vertical_rule_8 = Rule.If(vertical_distance_.Is(very_below_target.function).And(forward_distance_.Is(very_in_front_of_target.function))).Then(vertical_direction_.Is(move_up.function));
+        vertical_engine_.Rules.Add(vertical_rule_0, vertical_rule_1, vertical_rule_2, vertical_rule_3, vertical_rule_4, vertical_rule_5, vertical_rule_6, vertical_rule_7, vertical_rule_8, pm_vertical_rule_1, pm_vertical_rule_2);
     }
 
     private void FixedUpdate()
     {
+        // Control position of missile spawner 
         missile_fire_timer_ += Time.deltaTime;
         switch(movement_)
         {
@@ -331,6 +329,7 @@ public class FuzzyBrain : MonoBehaviour
         graph_.SeriesPlotY[5].YValues = new float[20] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     }
 
+    // Updates the graph to display fuzzy sets
     public void UpdateGraph(int linguistic_var)
     {
         currently_selected_linguistic_ = linguistic_var;
@@ -348,72 +347,40 @@ public class FuzzyBrain : MonoBehaviour
         int index = 0;
         for(int mf = 0; mf < 5; mf++)
         {
-            //for (int i = 0; i < 4; i++)
-            //{
             TrapezoidMembershipFunction function = (TrapezoidMembershipFunction)membership_functions_[linguistic_var][mf].function;
             x_values[index] = (float)function.A;
             x_values[index+1] = (float)function.B;
             x_values[index+2] = (float)function.C;
             x_values[index+3] = (float)function.D;
             index += 4;
-
-            //}
         }
-       // Array.Sort(x_values);
         for (int line = 0; line < 5; line++)
         {
             graph_.SeriesPlotY[line].YValues = new float[20];
             y_values.CopyTo(graph_.SeriesPlotY[line].YValues, 0);
-            //for (int i = 0;  i < 4; i++)
-            //{
-            //    for(int x = 0; x < 20;  x++)
-            //    {
-            //        if (x_values[x] == mf_values_[linguistic_var][line].values[i])
-            //        {
-            //            graph_.SeriesPlotY[line].YValues[x] = (i == 0 || i == 3) ? 0 : 1;
-            //            //if (x_values[x + 1] != x_values[x]) break;
-            //        }
-            //    }
-            //}
-            //float[] values = new float[4] {}
-            //for (int i = 0; i <= x_values.Length - 4; i++)
-            //{
-            //    if (x_values.Skip(i).Take(4).SequenceEqual(mf_values_[linguistic_var][line].values))
-            //    {
-                    graph_.SeriesPlotY[line].YValues[line * 4] = 0;
-                    graph_.SeriesPlotY[line].YValues[line * 4 + 1] = 1;
-                    graph_.SeriesPlotY[line].YValues[line * 4 + 2] = 1;
-                    graph_.SeriesPlotY[line].YValues[line * 4 + 3] = 0;
-                    //break;
-            //    }
-            //}
+
+            graph_.SeriesPlotY[line].YValues[line * 4] = 0;
+            graph_.SeriesPlotY[line].YValues[line * 4 + 1] = 1;
+            graph_.SeriesPlotY[line].YValues[line * 4 + 2] = 1;
+            graph_.SeriesPlotY[line].YValues[line * 4 + 3] = 0;
         }
         graph_.SeriesPlotX = x_values;
         graph_.UpdatePlot();
     }
 
+    // Displays values of selected membership function
     public void DisplayValueInputs(int membership_function)
     {
         currently_selected_membership_ = membership_function;
-        //if (membership_function == 2)
-        //{
-        //    value4_object_.transform.parent.gameObject.SetActive(false);
-        //    TriangleMembershipFunction function = (TriangleMembershipFunction)membership_functions_[currently_selected_linguistic_][membership_function].function;
-        //    value1_.text = function.A.ToString();
-        //    value2_.text = function.B.ToString();
-        //    value3_.text = function.C.ToString();
-        //}
-        //else
-        //{
-            //value4_object_.transform.parent.gameObject.SetActive(true);
-            TrapezoidMembershipFunction function = (TrapezoidMembershipFunction)membership_functions_[currently_selected_linguistic_][membership_function].function;
-            value1_.text = function.A.ToString();
-            value2_.text = function.B.ToString();
-            value3_.text = function.C.ToString();
-            value4_.text = function.D.ToString();
-        //}
+
+        TrapezoidMembershipFunction function = (TrapezoidMembershipFunction)membership_functions_[currently_selected_linguistic_][membership_function].function;
+        value1_.text = function.A.ToString();
+        value2_.text = function.B.ToString();
+        value3_.text = function.C.ToString();
+        value4_.text = function.D.ToString();
     }
 
+    //Called by menu to update to newly input values
     public void UpdateMembershipValues()
     {
         float val1 = float.Parse(value1_.text);
@@ -448,8 +415,10 @@ public class FuzzyBrain : MonoBehaviour
         UpdateGraph(currently_selected_linguistic_);
     }
 
-    public void BatchUpdateMembershipValues(List<float[]> values)
+    // Called to update a linguistic variables fuzzy set of membership functions all at once
+    public void BatchUpdateMembershipValues(int linguistic_var, List<float[]> values)
     {
+        currently_selected_linguistic_ = linguistic_var;
         ref LinguisticVariable lingustic = ref forward_distance_;
         switch (currently_selected_linguistic_)
         {
@@ -479,6 +448,7 @@ public class FuzzyBrain : MonoBehaviour
         UpdateGraph(currently_selected_linguistic_);
     }
 
+    // Resets counters and switch to testing
     public void RunTest()
     {
         testing_ = true;
